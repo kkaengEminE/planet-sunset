@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SUNSET — 3D Sunset Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="loader-spinner"></div>
+      <p>Loading Sunset...</p>
+    </div>
+  </div>
+
+  <!-- 3D Canvas -->
+  <canvas id="webgl"></canvas>
+
+  <!-- Navigation -->
+  <nav id="sunset-nav">
+    <div class="nav-logo">SUNSET</div>
+    <div class="nav-buttons">
+      <button class="nav-btn active" data-scene="ocean">
+        <span class="nav-icon">🌊</span>
+        <span class="nav-label">Ocean</span>
+      </button>
+      <button class="nav-btn" data-scene="planet">
+        <span class="nav-icon">🪐</span>
+        <span class="nav-label">Planet</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Scroll Content -->
+  <div id="scroll-content">
+    <!-- Hero Section -->
+    <section id="section-hero" class="section hero-section">
+      <div class="section-content">
+        <h1 class="hero-title">
+          <span class="hero-line">WHERE THE</span>
+          <span class="hero-line accent">SUN SETS</span>
+          <span class="hero-line">THE WORLD GLOWS</span>
+        </h1>
+        <p class="hero-subtitle">Two worlds, two horizons — scroll to witness the golden hour</p>
+        <div class="scroll-indicator">
+          <div class="scroll-arrow"></div>
+          <span>Scroll to explore</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ocean Sunset Section -->
+    <section id="section-ocean" class="section">
+      <div class="section-content">
+        <div class="scene-label">01</div>
+        <h2 class="scene-title">OCEAN<br/>SUNSET</h2>
+        <p class="scene-desc">The sun melts into the horizon,<br/>painting the sea in liquid gold<br/>and the sand in amber warmth.</p>
+        <div class="scene-stats">
+          <div class="stat">
+            <span class="stat-value">2 min</span>
+            <span class="stat-label">to set below horizon</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">1,000 km</span>
+            <span class="stat-label">visible horizon</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Planet Sunset Section -->
+    <section id="section-planet" class="section">
+      <div class="section-content">
+        <div class="scene-label">02</div>
+        <h2 class="scene-title">LITTLE<br/>PLANET</h2>
+        <p class="scene-desc">On a world so small you could walk its edge,<br/>the sun dips behind the curve —<br/>and the sky burns in every direction.</p>
+        <div class="scene-stats">
+          <div class="stat">
+            <span class="stat-value">360°</span>
+            <span class="stat-label">horizon glow</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">∞</span>
+            <span class="stat-label">worlds to imagine</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <section id="section-footer" class="section footer-section">
+      <div class="section-content">
+        <h2 class="footer-title">EVERY SUNSET IS A PROMISE</h2>
+        <p class="footer-desc">Built with Three.js & GSAP</p>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

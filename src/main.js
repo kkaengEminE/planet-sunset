@@ -10,7 +10,18 @@ class App {
     this.sceneManager = null;
     this.scrollController = null;
     this.navigation = null;
-    this._init();
+
+    try {
+      this._init();
+    } catch (e) {
+      console.error('App init error:', e);
+      this._hideLoader();
+    }
+  }
+
+  _hideLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.classList.add('hidden');
   }
 
   _init() {
@@ -28,23 +39,23 @@ class App {
     // Start with ocean
     this.sceneManager.switchScene('ocean');
 
+    // Navigation (created before ScrollController, which may fire callbacks immediately)
+    this.navigation = new Navigation(null);
+
     // Scroll controller
     this.scrollController = new ScrollController((sceneName) => {
       this.sceneManager.switchScene(sceneName);
-      this.navigation.setActive(sceneName);
+      if (this.navigation) this.navigation.setActive(sceneName);
     });
 
-    // Navigation
-    this.navigation = new Navigation(this.scrollController);
+    // Wire navigation to scroll controller
+    this.navigation.scrollController = this.scrollController;
 
     // Start render loop
     this._animate();
 
     // Hide loader
-    setTimeout(() => {
-      const loader = document.getElementById('loader');
-      if (loader) loader.classList.add('hidden');
-    }, 800);
+    setTimeout(() => this._hideLoader(), 800);
   }
 
   _animate() {

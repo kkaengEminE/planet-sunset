@@ -11,7 +11,9 @@ export class Navigation {
     this.buttons.forEach(btn => {
       btn.addEventListener('click', () => {
         const scene = btn.dataset.scene;
-        this.scrollController.scrollToScene(scene);
+        if (this.scrollController) {
+          this.scrollController.scrollToScene(scene);
+        }
       });
     });
   }

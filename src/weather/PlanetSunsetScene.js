@@ -19,23 +19,31 @@ export class PlanetSunsetScene extends WeatherScene {
     this.flowers = [];
     this.grassBlades = [];
 
-    // Mouse orbit state
-    this._mouseX = 0;
-    this._mouseY = 0;
-    this._targetOrbitX = 0;
-    this._targetOrbitY = 0;
-    this._orbitX = 0;   // horizontal angle
-    this._orbitY = 0.2;  // vertical angle (start slightly above)
-    this._isDragging = false;
-    this._lastMouseX = 0;
-    this._lastMouseY = 0;
+    // View mode: 'planet' (3rd person) or 'firstPerson'
+    this._viewMode = 'planet';
+    this._viewTransition = 0; // 0 = planet, 1 = firstPerson
+    this._targetViewTransition = 0;
 
-    this._onMouseDown = this._onMouseDown.bind(this);
-    this._onMouseMove = this._onMouseMove.bind(this);
-    this._onMouseUp = this._onMouseUp.bind(this);
-    this._onTouchStart = this._onTouchStart.bind(this);
-    this._onTouchMove = this._onTouchMove.bind(this);
-    this._onTouchEnd = this._onTouchEnd.bind(this);
+    // Raycaster for click detection
+    this._raycaster = new THREE.Raycaster();
+    this._mouse = new THREE.Vector2();
+
+    // Bind handlers
+    this._onClick = this._onClick.bind(this);
+
+    // Camera positions for interpolation
+    this._currentCamPos = new THREE.Vector3();
+    this._currentCamLookAt = new THREE.Vector3();
+    this._targetCamPos = new THREE.Vector3();
+    this._targetCamLookAt = new THREE.Vector3();
+
+    // Planet config
+    this._planetRadius = 4;
+    this._planetCenter = new THREE.Vector3(0, -1, 2);
+
+    // UI refs
+    this._textOverlay = null;
+    this._clickHint = null;
   }
 
   init() {
@@ -59,76 +67,75 @@ export class PlanetSunsetScene extends WeatherScene {
 
   activate() {
     super.activate();
-    // Reset orbit
-    this._orbitX = 0;
-    this._orbitY = 0.2;
-    this._targetOrbitX = 0;
-    this._targetOrbitY = 0.2;
 
-    // Add mouse/touch listeners
+    // Reset view
+    this._viewMode = 'planet';
+    this._viewTransition = 0;
+    this._targetViewTransition = 0;
+
+    // Add click listener
     const canvas = document.getElementById('webgl');
-    canvas.addEventListener('mousedown', this._onMouseDown);
-    window.addEventListener('mousemove', this._onMouseMove);
-    window.addEventListener('mouseup', this._onMouseUp);
-    canvas.addEventListener('touchstart', this._onTouchStart, { passive: false });
-    window.addEventListener('touchmove', this._onTouchMove, { passive: false });
-    window.addEventListener('touchend', this._onTouchEnd);
+    canvas.addEventListener('click', this._onClick);
+    canvas.style.cursor = 'default';
+
+    // Show text overlay & hint
+    this._textOverlay = document.getElementById('planet-text');
+    this._clickHint = document.getElementById('planet-click-hint');
+    if (this._textOverlay) this._textOverlay.classList.add('visible');
+    if (this._clickHint) {
+      setTimeout(() => this._clickHint.classList.add('visible'), 1500);
+    }
   }
 
   deactivate() {
     super.deactivate();
     const canvas = document.getElementById('webgl');
-    canvas.removeEventListener('mousedown', this._onMouseDown);
-    window.removeEventListener('mousemove', this._onMouseMove);
-    window.removeEventListener('mouseup', this._onMouseUp);
-    canvas.removeEventListener('touchstart', this._onTouchStart);
-    window.removeEventListener('touchmove', this._onTouchMove);
-    window.removeEventListener('touchend', this._onTouchEnd);
+    canvas.removeEventListener('click', this._onClick);
+    canvas.style.cursor = 'default';
+
+    // Hide text overlay & hint
+    if (this._textOverlay) this._textOverlay.classList.remove('visible');
+    if (this._clickHint) this._clickHint.classList.remove('visible');
 
     this.camera.position.set(0, 3, 12);
     this.camera.lookAt(0, 2, 0);
   }
 
-  // --- Mouse / Touch handlers ---
-  _onMouseDown(e) {
-    this._isDragging = true;
-    this._lastMouseX = e.clientX;
-    this._lastMouseY = e.clientY;
-  }
-  _onMouseMove(e) {
-    if (!this._isDragging) return;
-    const dx = e.clientX - this._lastMouseX;
-    const dy = e.clientY - this._lastMouseY;
-    this._lastMouseX = e.clientX;
-    this._lastMouseY = e.clientY;
-    this._targetOrbitX += dx * 0.005;
-    this._targetOrbitY += dy * 0.003;
-    this._targetOrbitY = clamp(this._targetOrbitY, -0.8, 1.0);
-  }
-  _onMouseUp() {
-    this._isDragging = false;
-  }
-  _onTouchStart(e) {
-    if (e.touches.length === 1) {
-      e.preventDefault();
-      this._isDragging = true;
-      this._lastMouseX = e.touches[0].clientX;
-      this._lastMouseY = e.touches[0].clientY;
+  _onClick(e) {
+    const canvas = document.getElementById('webgl');
+    const rect = canvas.getBoundingClientRect();
+    this._mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    this._mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this._raycaster.setFromCamera(this._mouse, this.camera);
+
+    // Check figure hit
+    if (this.figure) {
+      const intersects = this._raycaster.intersectObjects(this.figure.children, true);
+      if (intersects.length > 0) {
+        this._toggleView();
+        return;
+      }
+    }
+
+    // If in first person, clicking anywhere goes back to planet view
+    if (this._viewMode === 'firstPerson') {
+      this._toggleView();
     }
   }
-  _onTouchMove(e) {
-    if (!this._isDragging || e.touches.length !== 1) return;
-    e.preventDefault();
-    const dx = e.touches[0].clientX - this._lastMouseX;
-    const dy = e.touches[0].clientY - this._lastMouseY;
-    this._lastMouseX = e.touches[0].clientX;
-    this._lastMouseY = e.touches[0].clientY;
-    this._targetOrbitX += dx * 0.005;
-    this._targetOrbitY += dy * 0.003;
-    this._targetOrbitY = clamp(this._targetOrbitY, -0.8, 1.0);
-  }
-  _onTouchEnd() {
-    this._isDragging = false;
+
+  _toggleView() {
+    if (this._viewMode === 'planet') {
+      this._viewMode = 'firstPerson';
+      this._targetViewTransition = 1;
+      // Hide figure click hint
+      if (this._clickHint) this._clickHint.classList.remove('visible');
+    } else {
+      this._viewMode = 'planet';
+      this._targetViewTransition = 0;
+      // Show hint again
+      if (this._clickHint) this._clickHint.classList.add('visible');
+    }
   }
 
   // === SKY ===
@@ -248,7 +255,7 @@ export class PlanetSunsetScene extends WeatherScene {
     this.group.add(this.stars);
   }
 
-  // === SUN: behind/below planet, large round disc ===
+  // === SUN ===
   _createSun() {
     const sunGeo = new THREE.SphereGeometry(4, 32, 32);
     const sunMat = new THREE.MeshBasicMaterial({ color: 0xffdd55 });
@@ -279,9 +286,9 @@ export class PlanetSunsetScene extends WeatherScene {
     this.group.add(this.sunHalo);
   }
 
-  // === PLANET: closer to camera ===
+  // === PLANET ===
   _createPlanet() {
-    const geo = new THREE.SphereGeometry(4, 64, 64);
+    const geo = new THREE.SphereGeometry(this._planetRadius, 64, 64);
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         uSunDir: { value: new THREE.Vector3(0, -1, -0.5).normalize() },
@@ -355,14 +362,13 @@ export class PlanetSunsetScene extends WeatherScene {
     });
 
     this.planet = new THREE.Mesh(geo, mat);
-    // Moved forward: z=2 instead of 0, closer to camera
-    this.planet.position.set(0, -1, 2);
+    this.planet.position.copy(this._planetCenter);
     this.group.add(this.planet);
   }
 
   // === ATMOSPHERE ===
   _createAtmosphere() {
-    const geo = new THREE.SphereGeometry(4.25, 64, 64);
+    const geo = new THREE.SphereGeometry(this._planetRadius + 0.25, 64, 64);
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         uSunDir: { value: new THREE.Vector3(0, -1, -0.5).normalize() },
@@ -467,22 +473,24 @@ export class PlanetSunsetScene extends WeatherScene {
     this.group.add(this.backGlow);
   }
 
-  // === FIGURE ===
+  // === FIGURE (sitting on top of planet, facing left toward sun) ===
   _createFigure() {
     const figureGroup = new THREE.Group();
-
     const silhouetteMat = new THREE.MeshBasicMaterial({ color: 0x0a0505 });
 
+    // Body (torso)
     const bodyGeo = new THREE.CapsuleGeometry(0.12, 0.35, 8, 8);
     const body = new THREE.Mesh(bodyGeo, silhouetteMat);
     body.position.y = 0.2;
     figureGroup.add(body);
 
+    // Head
     const headGeo = new THREE.SphereGeometry(0.12, 16, 16);
     const head = new THREE.Mesh(headGeo, silhouetteMat);
     head.position.y = 0.55;
     figureGroup.add(head);
 
+    // Legs (seated pose)
     const legGeo = new THREE.CapsuleGeometry(0.05, 0.25, 6, 6);
     const legL = new THREE.Mesh(legGeo, silhouetteMat);
     legL.position.set(-0.08, -0.1, 0.05);
@@ -496,7 +504,8 @@ export class PlanetSunsetScene extends WeatherScene {
     legR.rotation.x = -0.5;
     figureGroup.add(legR);
 
-    const planetR = 4;
+    // Position on top of planet
+    const planetR = this._planetRadius;
     figureGroup.position.set(
       this.planet.position.x,
       this.planet.position.y + planetR + 0.05,
@@ -514,7 +523,7 @@ export class PlanetSunsetScene extends WeatherScene {
     for (let i = 0; i < 15; i++) {
       const theta = (Math.random() - 0.3) * Math.PI * 0.7;
       const phi = Math.random() * Math.PI * 2;
-      const r = 4.05;
+      const r = this._planetRadius + 0.05;
 
       const x = r * Math.cos(theta) * Math.cos(phi);
       const y = r * Math.sin(theta);
@@ -558,7 +567,7 @@ export class PlanetSunsetScene extends WeatherScene {
     for (let i = 0; i < 40; i++) {
       const theta = (Math.random() - 0.2) * Math.PI * 0.8;
       const phi = Math.random() * Math.PI * 2;
-      const r = 4.02;
+      const r = this._planetRadius + 0.02;
 
       const x = r * Math.cos(theta) * Math.cos(phi);
       const y = r * Math.sin(theta);
@@ -592,11 +601,11 @@ export class PlanetSunsetScene extends WeatherScene {
   update(progress, delta, elapsed) {
     const sunsetProgress = smoothstep(0.0, 0.85, progress);
 
-    // Smooth orbit interpolation
-    this._orbitX += (this._targetOrbitX - this._orbitX) * Math.min(1, delta * 5);
-    this._orbitY += (this._targetOrbitY - this._orbitY) * Math.min(1, delta * 5);
+    // Smooth view transition
+    const transSpeed = delta * 2.5;
+    this._viewTransition += (this._targetViewTransition - this._viewTransition) * Math.min(1, transSpeed);
 
-    // Sun descends behind/below planet
+    // --- Sun animation ---
     const sunStartY = -4;
     const sunEndY = -14;
     const sunY = lerp(sunStartY, sunEndY, sunsetProgress);
@@ -663,22 +672,89 @@ export class PlanetSunsetScene extends WeatherScene {
       lerp(0.1, 0.04, sunsetProgress)
     );
 
-    // --- CAMERA: mouse orbit around planet ---
-    const orbitRadius = lerp(10, 8, smoothstep(0, 1, progress));
-    const cx = Math.sin(this._orbitX) * orbitRadius;
-    const cy = this._orbitY * orbitRadius * 0.5 + lerp(2, 1, smoothstep(0, 1, progress));
-    const cz = Math.cos(this._orbitX) * orbitRadius + this.planet.position.z;
+    // --- TEXT OVERLAY: update step based on progress ---
+    this._updateTextStep(progress);
 
-    this.camera.position.set(cx, cy, cz);
-    this.camera.lookAt(
-      this.planet.position.x,
-      this.planet.position.y + 0.5,
-      this.planet.position.z
+    // --- CAMERA ---
+    // 3rd person (planet view): side view, figure on top, sun to the left
+    const p3_camPos = new THREE.Vector3(
+      8,
+      lerp(4, 2, smoothstep(0, 1, progress)),
+      this._planetCenter.z + 6
     );
+    const p3_lookAt = new THREE.Vector3(
+      this._planetCenter.x,
+      this._planetCenter.y + 1.5,
+      this._planetCenter.z
+    );
+
+    // 1st person: on figure's head, looking toward the sun
+    const figureHeadY = this._planetCenter.y + this._planetRadius + 0.7;
+    const fpLookDir = new THREE.Vector3()
+      .subVectors(this.sun.position, new THREE.Vector3(this._planetCenter.x, figureHeadY, this._planetCenter.z))
+      .normalize();
+
+    const p1_camPos = new THREE.Vector3(
+      this._planetCenter.x,
+      figureHeadY,
+      this._planetCenter.z
+    );
+    const p1_lookAt = new THREE.Vector3(
+      this._planetCenter.x + fpLookDir.x * 20,
+      figureHeadY + fpLookDir.y * 20,
+      this._planetCenter.z + fpLookDir.z * 20
+    );
+
+    // Interpolate between modes
+    const t = this._viewTransition;
+    this._targetCamPos.lerpVectors(p3_camPos, p1_camPos, t);
+    this._targetCamLookAt.lerpVectors(p3_lookAt, p1_lookAt, t);
+
+    // Smooth camera movement
+    const camSmooth = Math.min(1, delta * 4);
+    this._currentCamPos.lerp(this._targetCamPos, camSmooth);
+    this._currentCamLookAt.lerp(this._targetCamLookAt, camSmooth);
+
+    this.camera.position.copy(this._currentCamPos);
+    this.camera.lookAt(this._currentCamLookAt);
+
+    // Hide/show figure in first person
+    if (this.figure) {
+      this.figure.visible = t < 0.5;
+    }
 
     // Bloom
     this.bloomStrength = lerp(0.6, 2.5, glowPhase);
 
+    // Canvas cursor: pointer when hovering figure in planet view
+    this._updateCursor();
+
     this.fogConfig = null;
+  }
+
+  _updateTextStep(progress) {
+    if (!this._textOverlay) return;
+
+    let step;
+    if (progress < 0.25) step = 0;
+    else if (progress < 0.5) step = 1;
+    else if (progress < 0.75) step = 2;
+    else step = 3;
+
+    const lines = this._textOverlay.querySelectorAll('.planet-text-line');
+    lines.forEach(line => {
+      const lineStep = parseInt(line.dataset.step, 10);
+      line.classList.toggle('active', lineStep === step);
+    });
+  }
+
+  _updateCursor() {
+    if (this._viewMode !== 'planet') return;
+
+    // Simple center-screen hover detection for figure
+    const canvas = document.getElementById('webgl');
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
   }
 }

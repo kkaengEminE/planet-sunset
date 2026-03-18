@@ -41,6 +41,9 @@ export class PlanetSunsetScene extends WeatherScene {
     this._planetRadius = 4;
     this._planetCenter = new THREE.Vector3(0, -1, 2);
 
+    // Brightness (controlled by slider, 0–1)
+    this._brightness = 0.5;
+
     // UI refs
     this._textOverlay = null;
     this._clickHint = null;
@@ -267,7 +270,7 @@ export class PlanetSunsetScene extends WeatherScene {
     const glowMat = new THREE.MeshBasicMaterial({
       color: 0xffaa33,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.2,
       side: THREE.BackSide,
     });
     this.sunGlow = new THREE.Mesh(glowGeo, glowMat);
@@ -636,7 +639,7 @@ export class PlanetSunsetScene extends WeatherScene {
     const pulse = 1 + Math.sin(elapsed * 1.2) * 0.02;
     this.sun.scale.setScalar(pulse);
 
-    this.sunLight.intensity = lerp(3.5, 0.5, sunsetProgress);
+    this.sunLight.intensity = lerp(2.0, 0.3, sunsetProgress) * (0.5 + this._brightness);
     this.sunLight.color.setRGB(r, g * 0.8, b);
 
     // Back glow
@@ -723,8 +726,9 @@ export class PlanetSunsetScene extends WeatherScene {
       this.figure.visible = t < 0.5;
     }
 
-    // Bloom
-    this.bloomStrength = lerp(0.6, 2.5, glowPhase);
+    // Bloom — scaled by brightness
+    const maxBloom = lerp(0.3, 1.8, this._brightness);
+    this.bloomStrength = lerp(0.2, maxBloom, glowPhase);
 
     // Canvas cursor: pointer when hovering figure in planet view
     this._updateCursor();

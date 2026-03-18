@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SUNSET — 3D Sunset Experience</title>
+  <title>Le Petit Prince — Sunset</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet" />
@@ -21,87 +21,40 @@
   <!-- 3D Canvas -->
   <canvas id="webgl"></canvas>
 
-  <!-- Navigation -->
-  <nav id="sunset-nav">
-    <div class="nav-logo">SUNSET</div>
-    <div class="nav-buttons">
-      <button class="nav-btn active" data-scene="ocean">
-        <span class="nav-icon">🌊</span>
-        <span class="nav-label">Ocean</span>
-      </button>
-      <button class="nav-btn" data-scene="planet">
-        <span class="nav-icon">🪐</span>
-        <span class="nav-label">Planet</span>
-      </button>
+  <!-- Text Overlay (top-left) -->
+  <div class="planet-text-overlay visible" id="planet-text">
+    <div class="planet-text-line active" data-step="0">
+      <p class="planet-quote">"해가 지는 걸 보면<br/>마음이 슬퍼지지 않니?"</p>
+      <p class="planet-caption">— Le Petit Prince</p>
     </div>
-  </nav>
+    <div class="planet-text-line" data-step="1">
+      <p class="planet-quote">"하루에 해가 지는 걸<br/>마흔네 번이나 본 적이 있어."</p>
+    </div>
+    <div class="planet-text-line" data-step="2">
+      <p class="planet-quote">"그만큼 슬펐던 거야..."</p>
+    </div>
+    <div class="planet-text-line" data-step="3">
+      <p class="planet-quote">"가장 중요한 건<br/>눈에 보이지 않아."</p>
+    </div>
+  </div>
 
-  <!-- Scroll Content -->
-  <div id="scroll-content">
-    <!-- Hero Section -->
-    <section id="section-hero" class="section hero-section">
-      <div class="section-content">
-        <h1 class="hero-title">
-          <span class="hero-line">WHERE THE</span>
-          <span class="hero-line accent">SUN SETS</span>
-          <span class="hero-line">THE WORLD GLOWS</span>
-        </h1>
-        <p class="hero-subtitle">Two worlds, two horizons — scroll to witness the golden hour</p>
-        <div class="scroll-indicator">
-          <div class="scroll-arrow"></div>
-          <span>Scroll to explore</span>
-        </div>
-      </div>
-    </section>
+  <!-- Click Hint (bottom-center) -->
+  <div class="planet-click-hint" id="planet-click-hint">
+    인물을 클릭하면 그의 시선으로 볼 수 있어요
+  </div>
 
-    <!-- Ocean Sunset Section -->
-    <section id="section-ocean" class="section">
-      <div class="section-content">
-        <div class="scene-label">01</div>
-        <h2 class="scene-title">OCEAN<br/>SUNSET</h2>
-        <p class="scene-desc">The sun melts into the horizon,<br/>painting the sea in liquid gold<br/>and the sand in amber warmth.</p>
-        <div class="scene-stats">
-          <div class="stat">
-            <span class="stat-value">2 min</span>
-            <span class="stat-label">to set below horizon</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">1,000 km</span>
-            <span class="stat-label">visible horizon</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Planet Sunset Section -->
-    <section id="section-planet" class="section">
-      <div class="planet-text-overlay" id="planet-text">
-        <div class="planet-text-line active" data-step="0">
-          <p class="planet-quote">"해가 지는 걸 보면<br/>마음이 슬퍼지지 않니?"</p>
-          <p class="planet-caption">— Le Petit Prince</p>
-        </div>
-        <div class="planet-text-line" data-step="1">
-          <p class="planet-quote">"하루에 해가 지는 걸<br/>마흔네 번이나 본 적이 있어."</p>
-        </div>
-        <div class="planet-text-line" data-step="2">
-          <p class="planet-quote">"그만큼 슬펐던 거야..."</p>
-        </div>
-        <div class="planet-text-line" data-step="3">
-          <p class="planet-quote">"가장 중요한 건<br/>눈에 보이지 않아."</p>
-        </div>
-      </div>
-      <div class="planet-click-hint" id="planet-click-hint">
-        인물을 클릭하면 그의 시선으로 볼 수 있어요
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <section id="section-footer" class="section footer-section">
-      <div class="section-content">
-        <h2 class="footer-title">EVERY SUNSET IS A PROMISE</h2>
-        <p class="footer-desc">Built with Three.js & GSAP</p>
-      </div>
-    </section>
+  <!-- Controls (top-right) -->
+  <div id="controls">
+    <div class="control-group">
+      <label class="control-label" for="brightness-slider">밝기</label>
+      <input type="range" id="brightness-slider" class="control-slider" min="0" max="100" value="50" />
+    </div>
+    <button id="replay-btn" class="control-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 8a6 6 0 0 1 10.2-4.3L11 5h4V1l-1.5 1.5A7.96 7.96 0 0 0 0 8h2zm12 0a6 6 0 0 1-10.2 4.3L5 11H1v4l1.5-1.5A7.96 7.96 0 0 0 16 8h-2z" fill="currentColor"/>
+      </svg>
+      다시 보기
+    </button>
   </div>
 
   <script type="module" src="/src/main.js"></script>

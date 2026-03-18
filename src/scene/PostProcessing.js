@@ -13,9 +13,9 @@ export class PostProcessing {
 
     this.bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.0,
-      0.8,
-      0.7
+      0.0,   // strength (controlled dynamically)
+      0.6,   // radius
+      0.85   // threshold (higher = less bloom on dim areas)
     );
     this.composer.addPass(this.bloomPass);
 

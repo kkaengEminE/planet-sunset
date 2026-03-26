@@ -493,6 +493,28 @@ export class PlanetSunsetScene extends WeatherScene {
     head.position.y = 0.55;
     figureGroup.add(head);
 
+    // Crown
+    const crownBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.10, 0.13, 0.06, 16),
+      silhouetteMat
+    );
+    crownBase.position.y = 0.68;
+    figureGroup.add(crownBase);
+
+    for (let i = 0; i < 3; i++) {
+      const point = new THREE.Mesh(
+        new THREE.ConeGeometry(0.03, 0.07, 4),
+        silhouetteMat
+      );
+      const angle = (i / 3) * Math.PI * 2;
+      point.position.set(
+        Math.sin(angle) * 0.08,
+        0.73,
+        Math.cos(angle) * 0.08
+      );
+      figureGroup.add(point);
+    }
+
     // Legs (seated pose)
     const legGeo = new THREE.CapsuleGeometry(0.05, 0.25, 6, 6);
     const legL = new THREE.Mesh(legGeo, silhouetteMat);

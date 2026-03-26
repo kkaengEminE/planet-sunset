@@ -140,6 +140,19 @@ body {
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
 
+#sunset-counter {
+  position: fixed;
+  bottom: 48px;
+  left: 48px;
+  z-index: 15;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: rgba(255, 220, 180, 0.5);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
 .planet-click-hint {
   position: fixed;
   bottom: 48px;
@@ -270,6 +283,11 @@ body {
     top: 24px;
     left: 24px;
     max-width: 50vw;
+  }
+
+  #sunset-counter {
+    bottom: 32px;
+    left: 24px;
   }
 
   .planet-click-hint {

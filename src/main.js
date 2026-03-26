@@ -15,6 +15,7 @@ class App {
     this._startTime = 0;
     this._brightness = 0.5;    // 0 → 1 (slider maps 0–100 to 0–1)
     this._lang = 'ko';
+    this._sunsetCount = 0;
 
     try {
       this._init();
@@ -127,6 +128,20 @@ class App {
     }
   }
 
+  _updateCounter() {
+    const counter = document.getElementById('sunset-counter');
+    if (!counter) return;
+    const count = document.getElementById('sunset-count');
+    if (count) count.textContent = this._sunsetCount;
+    // Update surrounding text based on language
+    const textNode = counter.childNodes[counter.childNodes.length - 1];
+    if (textNode) {
+      textNode.textContent = this._lang === 'ko'
+        ? '번째 해를 바라보는 중'
+        : ' sunsets watched';
+    }
+  }
+
   _toggleLang() {
     this._lang = this._lang === 'ko' ? 'en' : 'ko';
     document.querySelectorAll('.planet-quote').forEach(el => {
@@ -143,9 +158,13 @@ class App {
     if (langBtn) {
       langBtn.textContent = this._lang === 'ko' ? 'EN' : 'KO';
     }
+    this._updateCounter();
   }
 
   _replay() {
+    this._sunsetCount++;
+    this._updateCounter();
+
     this._startTime = performance.now();
     this._progress = 0;
     this._playing = true;
@@ -166,6 +185,8 @@ class App {
       this._progress = Math.min(1, elapsed / this._duration);
       if (this._progress >= 1) {
         this._playing = false;
+        this._sunsetCount++;
+        this._updateCounter();
       }
     }
 

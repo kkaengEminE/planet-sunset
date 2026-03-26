@@ -493,13 +493,14 @@ export class PlanetSunsetScene extends WeatherScene {
     head.position.y = 0.55;
     figureGroup.add(head);
 
-    // Crown
+    // Crown (hidden until sunset count >= 4)
+    const crownGroup = new THREE.Group();
     const crownBase = new THREE.Mesh(
       new THREE.CylinderGeometry(0.10, 0.13, 0.06, 16),
       silhouetteMat
     );
     crownBase.position.y = 0.68;
-    figureGroup.add(crownBase);
+    crownGroup.add(crownBase);
 
     for (let i = 0; i < 3; i++) {
       const point = new THREE.Mesh(
@@ -512,8 +513,11 @@ export class PlanetSunsetScene extends WeatherScene {
         0.73,
         Math.cos(angle) * 0.08
       );
-      figureGroup.add(point);
+      crownGroup.add(point);
     }
+    crownGroup.visible = false;
+    this._crown = crownGroup;
+    figureGroup.add(crownGroup);
 
     // Legs (seated pose)
     const legGeo = new THREE.CapsuleGeometry(0.05, 0.25, 6, 6);

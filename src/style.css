@@ -96,6 +96,7 @@ body {
   top: 48px;
   left: 48px;
   z-index: 15;
+  width: 50%;
   max-width: 50vw;
   pointer-events: none;
   opacity: 0;

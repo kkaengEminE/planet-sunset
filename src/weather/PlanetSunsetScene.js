@@ -740,10 +740,11 @@ export class PlanetSunsetScene extends WeatherScene {
     if (!this._textOverlay) return;
 
     let step;
-    if (progress < 0.25) step = 0;
-    else if (progress < 0.5) step = 1;
-    else if (progress < 0.75) step = 2;
-    else step = 3;
+    if (progress < 0.2) step = 0;
+    else if (progress < 0.4) step = 1;
+    else if (progress < 0.6) step = 2;
+    else if (progress < 0.8) step = 3;
+    else step = 4;
 
     const lines = this._textOverlay.querySelectorAll('.planet-text-line');
     lines.forEach(line => {

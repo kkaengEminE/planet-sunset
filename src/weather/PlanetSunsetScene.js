@@ -675,9 +675,6 @@ export class PlanetSunsetScene extends WeatherScene {
       lerp(0.1, 0.04, sunsetProgress)
     );
 
-    // --- TEXT OVERLAY: update step based on progress ---
-    this._updateTextStep(progress);
-
     // --- CAMERA ---
     // 3rd person (planet view): side view, figure on top, sun to the left
     const p3_camPos = new THREE.Vector3(

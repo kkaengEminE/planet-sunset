@@ -17,6 +17,12 @@ class App {
     this._lang = 'ko';
     this._sunsetCount = 0;
 
+    // Independent text timer
+    this._textProgress = 0;
+    this._textBaseDuration = 10;
+    this._textDuration = 10;
+    this._textStartTime = 0;
+
     try {
       this._init();
     } catch (e) {
@@ -57,6 +63,7 @@ class App {
 
     // Start animation
     this._startTime = performance.now();
+    this._textStartTime = performance.now();
     this._animate();
 
     // Hide loader
@@ -74,24 +81,38 @@ class App {
     const brightnessSlider = document.getElementById('brightness-slider');
     if (brightnessSlider) {
       brightnessSlider.addEventListener('input', (e) => {
-        this._brightness = parseInt(e.target.value, 10) / 100;
+        const val = parseInt(e.target.value, 10);
+        this._brightness = val / 100;
         if (this.planetScene) {
           this.planetScene._brightness = this._brightness;
         }
         this.sceneManager.renderer.toneMappingExposure = 0.4 + this._brightness * 1.2;
+        this._setVal('brightness-val', val);
       });
       this.sceneManager.renderer.toneMappingExposure = 0.4 + this._brightness * 1.2;
     }
 
-    // Text speed slider — controls transition duration of text lines
+    // Text speed slider — controls independent text timer + transition
     const textSpeedSlider = document.getElementById('text-speed-slider');
     if (textSpeedSlider) {
       textSpeedSlider.addEventListener('input', (e) => {
-        const mult = parseInt(e.target.value, 10) / 100; // 0.2 ~ 2.0
+        const val = parseInt(e.target.value, 10);
+        const mult = val / 100; // 0.2 ~ 2.0
+        const newDuration = this._textBaseDuration / mult;
+        // Preserve current text progress
+        if (this._playing) {
+          const currentTextProgress = this._textProgress;
+          this._textDuration = newDuration;
+          this._textStartTime = performance.now() - (currentTextProgress * newDuration * 1000);
+        } else {
+          this._textDuration = newDuration;
+        }
+        // Also adjust CSS transition speed
         const dur = 0.8 / mult;
         document.querySelectorAll('.planet-text-line').forEach(el => {
           el.style.transitionDuration = dur + 's';
         });
+        this._setVal('text-speed-val', val);
       });
     }
 
@@ -99,16 +120,19 @@ class App {
     const fontSizeSlider = document.getElementById('font-size-slider');
     if (fontSizeSlider) {
       fontSizeSlider.addEventListener('input', (e) => {
-        const scale = parseInt(e.target.value, 10) / 100; // 0.5 ~ 1.5
+        const val = parseInt(e.target.value, 10);
+        const scale = val / 100; // 0.5 ~ 1.5
         document.documentElement.style.setProperty('--font-scale', scale);
+        this._setVal('font-size-val', val);
       });
     }
 
-    // Sunset speed slider — controls animation duration
+    // Sunset speed slider — controls sun animation duration
     const sunsetSpeedSlider = document.getElementById('sunset-speed-slider');
     if (sunsetSpeedSlider) {
       sunsetSpeedSlider.addEventListener('input', (e) => {
-        const mult = parseInt(e.target.value, 10) / 100; // 0.2 ~ 2.0
+        const val = parseInt(e.target.value, 10);
+        const mult = val / 100; // 0.2 ~ 2.0
         const newDuration = this._baseDuration / mult;
         // Preserve current progress position
         if (this._playing) {
@@ -118,6 +142,7 @@ class App {
         } else {
           this._duration = newDuration;
         }
+        this._setVal('sunset-speed-val', val);
       });
     }
 
@@ -126,6 +151,11 @@ class App {
     if (langBtn) {
       langBtn.addEventListener('click', () => this._toggleLang());
     }
+  }
+
+  _setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
   }
 
   _updateCounter() {
@@ -166,7 +196,9 @@ class App {
     this._updateCounter();
 
     this._startTime = performance.now();
+    this._textStartTime = performance.now();
     this._progress = 0;
+    this._textProgress = 0;
     this._playing = true;
 
     // Reset text to first step
@@ -179,10 +211,20 @@ class App {
   _animate() {
     requestAnimationFrame(() => this._animate());
 
-    // Update progress (0 → 1 over _duration seconds)
     if (this._playing) {
-      const elapsed = (performance.now() - this._startTime) / 1000;
+      const now = performance.now();
+
+      // Sunset progress
+      const elapsed = (now - this._startTime) / 1000;
       this._progress = Math.min(1, elapsed / this._duration);
+
+      // Text progress (independent)
+      const textElapsed = (now - this._textStartTime) / 1000;
+      this._textProgress = Math.min(1, textElapsed / this._textDuration);
+
+      // Update text step based on textProgress
+      this._updateTextStep(this._textProgress);
+
       if (this._progress >= 1) {
         this._playing = false;
         this._sunsetCount++;
@@ -190,8 +232,23 @@ class App {
       }
     }
 
-    // Feed progress into scene manager
+    // Feed sunset progress into scene manager
     this.sceneManager.update({ sectionProgress: this._progress });
+  }
+
+  _updateTextStep(progress) {
+    let step;
+    if (progress < 0.2) step = 0;
+    else if (progress < 0.4) step = 1;
+    else if (progress < 0.6) step = 2;
+    else if (progress < 0.8) step = 3;
+    else step = 4;
+
+    const lines = document.querySelectorAll('.planet-text-line');
+    lines.forEach(line => {
+      const lineStep = parseInt(line.dataset.step, 10);
+      line.classList.toggle('active', lineStep === step);
+    });
   }
 }
 
